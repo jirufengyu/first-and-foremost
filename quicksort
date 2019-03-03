@@ -1,0 +1,34 @@
+#include<stdio.h>
+#include<time.h>
+#include<stdlib.h>
+void  quicksort(int s[], int left, int right);
+
+int main() {
+	int s[10], i;
+	srand((unsigned)time(NULL));
+	for ( i = 0;i < 10;i++)
+		s[i] = rand();
+	quicksort(s, 0, 9);
+	
+	for ( i = 0;i < 10;i++)
+		printf("%d,", s[i]);
+	getchar();
+	return 0;
+}
+void quicksort(int s[], int left, int right)
+{
+	int v = s[left], j = right, i = left, tem, mid;
+	if (i < j) {
+		
+		for (;i != j;) {
+			for (;s[j] > v&&i < j;j--);
+			if (j > i) { tem = s[i];s[i] = s[j];s[j] = tem; }
+			for (;s[i] < v&&i < j;i++);
+			if (i < j) { tem = s[i]; s[j] = s[i];s[j] = tem; }
+		}
+		s[j] = v;
+		mid = j;
+		quicksort(s, left, mid - 1);
+		quicksort(s, mid + 1, right);
+	}
+}
