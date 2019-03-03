@@ -1,0 +1,69 @@
+#include<stdio.h>
+#include<stdlib.h>
+struct node
+{
+	int n;
+	struct node *next;
+}*pnode = NULL;
+struct node * creat()
+{
+	int ntem;
+	struct node *tem, *head = 0, *trail = 0;
+	printf("input(<0end):");
+	scanf_s("%d", &ntem);
+	while (ntem > 0)
+	{
+		tem = (struct node*)malloc(sizeof(struct node));
+		tem->n = ntem;
+		tem->next = 0;
+		if (!head)head = trail = tem;
+		else
+		{
+			trail->next = tem;
+			trail = tem;
+		}
+		printf("input(<0end):");
+		scanf_s("%d", &ntem);
+	}
+	return head;
+}
+void list1(struct node *head)
+{
+	while (head) {
+		printf("%d,", head->n);
+		head = head->next;
+	}
+}
+void list(struct node *head)
+{
+	struct node *phead = head;
+	while (phead != NULL) {
+		printf("%d,", phead->n);
+		phead = phead->next;
+	}
+}
+void sort(struct node *head)
+{
+	struct node *p, *q, *r, *u;
+	p = head->next; head->next = NULL;
+	while (p != NULL)
+	{
+		r = head; q = head->next;
+		for (; q != NULL && q->n <= p->n; r = q, q = q->next);
+		u = p->next;
+		p->next = r->next;
+		r->next = p;
+		p = u;
+	}
+}
+int main()
+{
+	struct node *head;
+	head = creat();
+	list(head);
+	sort(head);
+	printf("\n");
+	list1(head);
+	system("pause");
+	return  0;
+}
