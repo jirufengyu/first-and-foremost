@@ -1,0 +1,1125 @@
+#include<stdio.h>
+#include<conio.h>
+#include<windows.h>
+#include<stdlib.h>
+#include<time.h>
+#include<mmsystem.h>
+#pragma comment (lib,"winmm.lib")//导入winmm.lib库
+#define Long 26
+#define Wide 30
+int s[Long][Wide] = { {0} };
+int x = (Wide - 2) / 2, y = Long - 1, skillcon = 1;
+unsigned long score = 0;
+int life = 5, bosscom = 1, bosslife;  //飞机生命
+int frequency = 2, speed = 3, second = 1, rstart, mode;
+int bulletctrl = 0;                                    //子弹类型控制器
+int planectrl = 2;                                    //飞机类型控制器
+int freezectrl = 0, firectrl = 0;                    //冷冻技能控制器   
+int freezetime = 0;                                  //冷冻时间
+void setting();
+void color(short x) {//字体色彩
+	if (x >= 0 && x <= 15)
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), x);
+	else
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
+}
+void menu()
+{
+	int flag;
+	color(15);
+	printf("说明：请在规定时间内消灭尽可能多的敌机\n按 W A S D 控制我机上下左右飞行，J 发射子弹 K释放技能\n设置：请按B\n");
+	printf("得分达到特定分数以上武器升级\n");
+	do
+	{
+		flag = 0;
+		switch (_getch())
+		{
+		case 'b':setting(); break;
+		case 'B':setting(); break;
+		default:flag = 1;
+		}
+	} while (flag);
+}
+void boss(int s[][Wide])                                      //设置boss
+{
+	int i;
+
+	bosslife = 300;										//设置boss生命
+	s[1][11] = s[1][12] = s[1][18] = s[1][19] = 3;
+	for (i = 0; i < 15; i++)
+		s[2][i + 8] = 3;
+	s[3][9] = s[3][21] = 3;
+	for (i = 0; i < 7; i++)
+		s[3][i + 12] = 3;
+	s[4][14] = s[4][15] = s[4][16] = 3;
+
+
+}
+void setting()
+{
+	//_getche();
+	int flag;
+	do
+	{
+		flag = 0;
+		printf("请选择模式：1.不死尽管打  2.来场boss挑战  3.only90s>>\n ");
+		switch (_getch())
+		{
+		case '1':second = 1000; bosscom = -1; mode = 1; break;
+		case '2':second = 1000; mode = 1; break;
+		case '3':second = 85; break;
+		default:flag = 1;
+		}
+	} while (flag);
+	do
+	{
+
+		flag = 0;
+		printf("请选择难度：1.菜机  2.战斗机  3.老子无敌>> ");
+		//_getch();
+		switch (_getch())
+		{
+		case '1':speed = 3; frequency = 5; break;
+		case '2':speed = 2; frequency = 3; break;
+		case '3':speed = 1; frequency = 1; break;
+		default:flag = 1;
+		}
+	} while (flag);
+	do
+	{
+		flag = 0;
+		printf("\n 座机类型：");
+		printf("\n 1. *");
+		printf("\n   *** 枭龙 技能： 万雷天牢引 得分到达1000分武器升级");
+		printf("\n");
+		printf("\n 2. *");
+		printf("\n    *");
+		printf("\n   *** 飓风 技能： 极度冰点   得分到达1500分武器升级");
+		printf("\n   * *");
+		printf("\n");
+		printf("\n 3. *");
+		printf("\n  * * * 饕餮 技能： 无限火力  得分到达2000分武器升级");
+		printf("\n   * *");
+		//_getch();
+		switch (_getch())
+		{
+		case '1':
+			planectrl = 1;
+			break;
+		case '2':
+			planectrl = 2;
+			break;
+		case '3':
+			planectrl = 3;
+			break;
+		default:
+			flag = 1;
+		}
+	} while (flag);
+	printf("\n 按任意键保存...");
+	_getch();
+}
+void planemod(int s[][Wide])        //飞机模型函数
+{
+	switch (planectrl)
+	{
+	case 1:
+		s[Long - 2][14] = 1;
+		s[Long - 2][13] = 1;
+		s[Long - 2][15] = 1;
+		s[Long - 3][14] = 1;
+		break;
+	case 2:
+		s[Long - 2][13] = 1;
+		s[Long - 2][15] = 1;
+		s[Long - 3][14] = 1;
+		s[Long - 3][13] = 1;
+		s[Long - 3][15] = 1;
+		s[Long - 4][14] = 1;
+		s[Long - 5][14] = 1;
+		break;
+	case 3:
+		s[Long - 2][13] = 1;
+		s[Long - 2][15] = 1;
+		s[Long - 3][14] = 1;
+		s[Long - 3][12] = 1;
+		s[Long - 3][16] = 1;
+		s[Long - 4][14] = 1;
+	}
+}
+void gotoxy(int x, int y) {//光标到指定位置
+	COORD pos = { x,y };
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleCursorPosition(hOut, pos);
+}
+void ready() //界面开始
+{
+	int i;
+	color(1);
+	gotoxy(10, 10);
+	printf("空军一号");
+	Sleep(2000);
+	system("cls");
+	color(15);
+	gotoxy(10, 10);
+	printf("制作：王品智 温悠朋 王潇华");
+	Sleep(4000);
+	system("cls");
+	color(5);
+	gotoxy(10, 10);
+	printf("READY");
+	Sleep(500);
+	system("cls");
+	color(4);
+	gotoxy(5, 5);
+	printf("*******************\n");
+	gotoxy(5, 5);
+	printf("*******************");
+	for (i = 0; i < 5; i++)
+	{
+		gotoxy(22, 5 + i);
+		printf("**\n");
+	}
+	gotoxy(5, 10);
+	printf("*******************\n");
+	gotoxy(5, 10);
+	printf("*******************");
+	for (i = 0; i < 5; i++)
+	{
+		gotoxy(22, 10 + i);
+		printf("**\n");
+	}
+	gotoxy(5, 15);
+	printf("*******************\n");
+	gotoxy(5, 15);
+	printf("*******************");
+	Sleep(1000);
+	system("cls");
+	color(6);
+	gotoxy(5, 5);
+	printf("*******************\n");
+	gotoxy(5, 5);
+	printf("*******************");
+	for (i = 0; i < 5; i++)
+	{
+		gotoxy(22, 5 + i);
+		printf("**\n");
+	}
+	gotoxy(5, 10);
+	printf("*******************\n");
+	gotoxy(5, 10);
+	printf("*******************");
+	for (i = 0; i < 5; i++)
+	{
+		gotoxy(5, 10 + i);
+		printf("**\n");
+	}
+	gotoxy(5, 15);
+	printf("*******************\n");
+	gotoxy(5, 15);
+	printf("*******************");
+	Sleep(1000);
+	system("cls");
+	color(2);
+	gotoxy(13, 5);
+	printf("**");
+	gotoxy(12, 6);
+	printf("***");
+	for (i = 0; i < 8; i++)
+	{
+		gotoxy(13, 7 + i);
+		printf("**\n");
+	}
+	gotoxy(12, 15);
+	printf("****");
+	Sleep(1000);
+	system("cls");
+	gotoxy(10, 10);
+	printf("GO");
+	Sleep(500);
+	system("cls");
+}
+void CtrlCursor(int x, int y)//控制光标
+{
+	COORD loc;
+	loc.X = x;
+	loc.Y = y;
+	SetConsoleCursorPosition(GetStdHandle(STD_OUTPUT_HANDLE), loc);
+}
+void HideCursor()/*隐藏光标函数*/
+{
+	CONSOLE_CURSOR_INFO cursor_info = { 1, 0 };
+	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursor_info);
+}
+void zhanchang(int s[][Wide], int remain)
+{
+	int i, j;
+	char p[Wide][Long] = { ' ' };
+	char control;                                                                        //游戏结束进行控制的控制器
+	for (i = 0; i < Wide; i++) { p[0][i] = '+'; p[Long - 1][i] = '+'; }
+	for (i = 1; i <= Long - 2; i++) { p[i][0] = '+'; p[i][Wide - 1] = '+'; }
+	HideCursor();                                                                        /*隐藏光标*/
+	system("cls");
+	if (life > 0 && remain >= 0)                                                        //玩家存活时
+	{
+		rstart = 0;
+		for (i = 0; i < Wide; i++) { s[0][i] = 4; s[Long - 1][i] = 4; }
+		for (i = 1; i <= Long - 2; i++) { s[i][0] = 4; s[i][Wide - 1] = 4; }
+		for (i = 0; i < Long; i++)
+		{
+			for (j = 0; j < Wide; j++)
+			{
+				switch (s[i][j])
+				{
+				case 0:printf(" "); break;
+				case 1:color(2); printf("*"); break;
+				case 2:
+					color(15);
+					switch (planectrl)
+					{
+					case 1:
+						printf("!");
+						break;
+					case 2:
+						printf("^");
+						break;
+					case 3:
+						printf("o");
+						break;
+					}
+					break;
+				case 3:color(15); printf("#"); break;
+				case 4:color(15); printf("+"); break;
+				case 5:color(15); printf("H"); break;
+				case 6:color(15); printf("U"); break;
+				case 7:color(15); printf("T"); break;
+				case 8:color(15); printf("Y"); break;
+				}
+			}
+			printf("\n");
+		}gotoxy(Wide + 1, 1);
+		printf("分数：%lu 生命：%d", score, life);
+		gotoxy(Wide + 1, 2);
+		if (planectrl == 1)
+			printf("万雷天牢引：");
+		else if (planectrl == 2)
+			printf("极度冰点：");
+		else if (planectrl == 3)
+			printf("无限火力");
+		for (i = 0; i < skillcon; i++)
+			printf("*");
+		color(15);
+		gotoxy(Wide + 1, 3);
+		if (bosscom == 0)
+		{
+			printf("bosslife:");
+			for (i = 0; i < bosslife / 10; i++)
+				printf("||");
+		}
+		gotoxy(0, 0);
+	}
+	else  if (life <= 0 || remain < 0)                                                       //玩家死亡时
+	{
+		bosscom = 1;
+		bulletctrl = 0;
+		for (i = 1; i < Long - 1; i++)                                                       //抹去飞机 敌机 子弹 boss的位置
+			for (j = 1; j < Wide - 1; j++)
+			{
+				if (s[i][j] == 1)
+					s[i][j] = 0;
+				else if (s[i][j] == 5)
+					s[i][j] = 0;
+				else if (s[i][j] == 6)
+					s[i][j] = 0;
+				else if (s[i][j] == 7)
+					s[i][j] = 0;
+				else if (s[i][j] == 8)
+					s[i][j] = 0;
+				else if (s[i][j] == 2)
+					s[i][j] = 0;
+				else if (s[i][j] == 3)
+					s[i][j] = 0;
+			}
+		Sleep(1000);
+		system("cls");
+		for (i = 0; i < Long; i++)
+		{
+			for (j = 0; j < Wide; j++)
+				printf("%c", p[i][j]);
+			printf("\n");
+		}
+		gotoxy(8, 10);
+		printf("Game Over");
+		gotoxy(6, 12);
+		printf(" 按下Q : quit game");
+		gotoxy(6, 13);
+		printf(" 按下R : restart");
+		gotoxy(0, Long + 1);
+		printf("\n分数：%lu 生命：%d", score, life);
+	a:
+		control = _getch();
+		switch (control)
+		{
+		case 'Q':
+		case 'q':
+			exit(0);
+		case 'R':
+		case 'r':
+			life = 5;
+			score = 0;
+			rstart = 1;
+			x = (Wide - 2) / 2;
+			y = Long - 1; break;
+		default:
+			goto a;
+		}
+	}
+	if (bosscom == 0)
+	{
+		if (bosslife <= 0)
+		{
+			bulletctrl = 0;
+			for (i = 1; i < Long - 1; i++)                                        //抹去飞机 敌机 子弹 boss的位置
+				for (j = 1; j < Wide - 1; j++)
+				{
+					if (s[i][j] == 1)
+						s[i][j] = 0;
+					else if (s[i][j] == 5)
+						s[i][j] = 0;
+					else if (s[i][j] == 2)
+						s[i][j] = 0;
+					else if (s[i][j] == 3)
+						s[i][j] = 0;
+				}
+			gotoxy(7, 10);
+			bosscom = 1;
+			bosslife = 50;
+			for (i = 1; i < Wide - 1; i++)
+				s[1][i] = 0;
+			for (i = 5; i < Wide - 5; i++)
+				s[2][i] = 0;
+			for (i = 10; i < Wide - 10; i++)
+				s[3][i] = 0;
+			printf("BOSS IS BROKEN");
+			Sleep(2000);
+			system("cls");
+			for (i = 0; i < Long; i++)
+			{
+				for (j = 0; j < Wide; j++)
+					printf("%c", p[i][j]);
+				printf("\n");
+			}
+			gotoxy(9, 10);
+			printf("**WIN**");
+			gotoxy(6, 12);
+			printf(" 按下Q : quit game");
+			gotoxy(6, 13);
+			printf(" 按下R : restart");
+			gotoxy(0, Long + 1);
+			printf("\n分数：%lu 生命：%d", score, life);
+		b:
+			control = _getch();
+			switch (control)
+			{
+			case 'Q':
+			case 'q':
+				exit(0);
+			case 'R':
+			case 'r':
+				life = 5;
+				score = 0;
+				rstart = 1;
+				x = (Wide - 2) / 2;
+				y = Long - 1; break;
+			default:
+				goto b;
+			}
+		}
+	}
+}
+void moveplane(int direction)//飞机的控制
+{
+	int i = 0, j = 0;
+	switch (direction)
+	{
+	case 'S':
+	case 's':
+		if (planectrl == 1)
+		{
+			if (s[y + 1][x] == 5 || s[y + 1][x - 1] == 5 || s[y + 1][x + 1] == 5)
+			{
+				y++;
+				life--;
+			}
+			else if (s[y + 1][x] == 6 || s[y + 1][x - 1] == 6 || s[y + 1][x + 1] == 6)
+			{
+				y++;
+				life--;
+			}
+			else if (s[y + 1][x] == 7 || s[y + 1][x - 1] == 7 || s[y + 1][x + 1] == 7)
+			{
+				y++;
+				life--;
+			}
+			else if (s[y + 1][x] == 8 || s[y + 1][x - 1] == 8 || s[y + 1][x + 1] == 8)
+			{
+				y++;
+				life--;
+			}
+			else
+				y++;
+			break;
+		}
+		else if (planectrl == 2)
+		{
+			if ((s[y + 1][x] == 5) || (s[y + 2][x - 1] == 5) || (s[y + 2][x + 1]) == 5)
+			{
+				y++;
+				life--;
+			}
+			else if ((s[y + 1][x] == 6) || (s[y + 2][x - 1] == 6) || (s[y + 2][x + 1]) == 6)
+			{
+				y++;
+				life--;
+			}
+			else if ((s[y + 1][x] == 7) || (s[y + 2][x - 1] == 7) || (s[y + 2][x + 1]) == 7)
+			{
+				y++;
+				life--;
+			}
+			else if ((s[y + 1][x] == 8) || (s[y + 2][x - 1] == 8) || (s[y + 2][x + 1]) == 8)
+			{
+				y++;
+				life--;
+			}
+			else
+				y++;
+			break;
+		}
+		else if (planectrl == 3)
+		{
+			if ((s[y][x - 2] == 5) || (s[y + 1][x - 1] == 5) || (s[y][x] == 5) || (s[y + 1][x + 1] == 5) || (s[y][x + 2] == 5))
+			{
+				y++;
+				life--;
+			}
+			else if ((s[y][x - 2] == 6) || (s[y + 1][x - 1] == 6) || (s[y][x] == 6) || (s[y + 1][x + 1] == 6) || (s[y][x + 2] == 6))
+			{
+				y++;
+				life--;
+			}
+			else if ((s[y][x - 2] == 7) || (s[y + 1][x - 1] == 7) || (s[y][x] == 7) || (s[y + 1][x + 1] == 7) || (s[y][x + 2] == 7))
+			{
+				y++;
+				life--;
+			}
+			else if ((s[y][x - 2] == 8) || (s[y + 1][x - 1] == 8) || (s[y][x] == 8) || (s[y + 1][x + 1] == 8) || (s[y][x + 2] == 8))
+			{
+				y++;
+				life--;
+			}
+			else
+				y++;
+			break;
+		}
+	case 'W':
+	case 'w':
+		if (planectrl == 1)
+		{
+			if (s[y - 2][x] == 5 || s[y - 1][x - 1] == 5 || s[y - 1][x + 1] == 5)
+			{
+				y--;
+				life--;
+			}
+			else if (s[y - 2][x] == 6 || s[y - 1][x - 1] == 6 || s[y - 1][x + 1] == 6)
+			{
+				y--;
+				life--;
+			}
+			else if (s[y - 2][x] == 7 || s[y - 1][x - 1] == 7 || s[y - 1][x + 1] == 7)
+			{
+				y--;
+				life--;
+			}
+			else if (s[y - 2][x] == 8 || s[y - 1][x - 1] == 8 || s[y - 1][x + 1] == 8)
+			{
+				y--;
+				life--;
+			}
+			else
+				y--;
+			break;
+		}
+		else if (planectrl == 2)
+		{
+			if ((s[y - 2][x] == 5) || (s[y - 1][x - 1] == 5) || (s[y - 1][x + 1] == 5) || (s[y - 3][x] == 5))
+			{
+				y--;
+				life--;
+			}
+			else if ((s[y - 2][x] == 6) || (s[y - 1][x - 1] == 6) || (s[y - 1][x + 1] == 6) || (s[y - 3][x] == 6))
+			{
+				y--;
+				life--;
+			}
+			else if ((s[y - 2][x] == 7) || (s[y - 1][x - 1] == 7) || (s[y - 1][x + 1] == 7) || (s[y - 3][x] == 7))
+			{
+				y--;
+				life--;
+			}
+			else if ((s[y - 2][x] == 8) || (s[y - 1][x - 1] == 8) || (s[y - 1][x + 1] == 8) || (s[y - 3][x] == 8))
+			{
+				y--;
+				life--;
+			}
+			else
+				y--;
+			break;
+		}
+		else if (planectrl == 3)
+		{
+			if ((s[y - 2][x - 2] == 5) || (s[y - 1][x - 1] == 5) || (s[y - 3][x] == 5) || (s[y - 1][x + 1] == 5) || (s[y - 2][x + 2] == 5))
+			{
+				y--;
+				life--;
+			}
+			else if ((s[y - 2][x - 2] == 6) || (s[y - 1][x - 1] == 6) || (s[y - 3][x] == 6) || (s[y - 1][x + 1] == 6) || (s[y - 2][x + 2] == 6))
+			{
+				y--;
+				life--;
+			}
+			else if ((s[y - 2][x - 2] == 7) || (s[y - 1][x - 1] == 7) || (s[y - 3][x] == 7) || (s[y - 1][x + 1] == 7) || (s[y - 2][x + 2] == 7))
+			{
+				y--;
+				life--;
+			}
+			else if ((s[y - 2][x - 2] == 8) || (s[y - 1][x - 1] == 8) || (s[y - 3][x] == 8) || (s[y - 1][x + 1] == 8) || (s[y - 2][x + 2] == 8))
+			{
+				y--;
+				life--;
+			}
+			else
+				y--;
+			break;
+		}
+	case 'A':
+	case 'a':
+		if (planectrl == 1)
+		{
+			if (s[y][x - 2] == 5 || s[y - 1][x - 1] == 5)
+			{
+				x--;
+				life--;
+			}
+			else if (s[y][x - 2] == 6 || s[y - 1][x - 1] == 6)
+			{
+				x--;
+				life--;
+			}
+			else if (s[y][x - 2] == 7 || s[y - 1][x - 1] == 7)
+			{
+				x--;
+				life--;
+			}
+			else if (s[y][x - 2] == 8 || s[y - 1][x - 1] == 8)
+			{
+				x--;
+				life--;
+			}
+			else
+				x--;
+			break;
+		}
+		else if (planectrl == 2)
+		{
+			if ((s[y - 1][x - 1] == 5) || (s[y][x - 2] == 5) || (s[y + 1][x - 2] == 5) || (s[y - 2][x - 1] == 5))
+			{
+				x--;
+				life--;
+			}
+			else if ((s[y - 1][x - 1] == 6) || (s[y][x - 2] == 6) || (s[y + 1][x - 2] == 6) || (s[y - 2][x - 1] == 6))
+			{
+				x--;
+				life--;
+			}
+			else if ((s[y - 1][x - 1] == 7) || (s[y][x - 2] == 7) || (s[y + 1][x - 2] == 7) || (s[y - 2][x - 1] == 7))
+			{
+				x--;
+				life--;
+			}
+			else if ((s[y - 1][x - 1] == 8) || (s[y][x - 2] == 8) || (s[y + 1][x - 2] == 8) || (s[y - 2][x - 1] == 8))
+			{
+				x--;
+				life--;
+			}
+			else
+				x--;
+			break;
+		}
+		else if (planectrl == 3)
+		{
+			if ((s[y - 1][x - 3] == 5) || (s[y][x - 2] == 5) || (s[y - 1][x - 1] == 5) || (s[y - 2][x - 1] == 5) || (s[y][x] == 5) || (s[y - 1][x + 1] == 5))
+			{
+				x--;
+				life--;
+			}
+			else if ((s[y - 1][x - 3] == 6) || (s[y][x - 2] == 6) || (s[y - 1][x - 1] == 6) || (s[y - 2][x - 1] == 6) || (s[y][x] == 6) || (s[y - 1][x + 1] == 6))
+			{
+				x--;
+				life--;
+			}
+			else if ((s[y - 1][x - 3] == 7) || (s[y][x - 2] == 7) || (s[y - 1][x - 1] == 7) || (s[y - 2][x - 1] == 7) || (s[y][x] == 7) || (s[y - 1][x + 1] == 7))
+			{
+				x--;
+				life--;
+			}
+			else if ((s[y - 1][x - 3] == 8) || (s[y][x - 2] == 8) || (s[y - 1][x - 1] == 8) || (s[y - 2][x - 1] == 8) || (s[y][x] == 8) || (s[y - 1][x + 1] == 8))
+			{
+				x--;
+				life--;
+			}
+			else
+				x--;
+			break;
+		}
+	case 'D':
+	case 'd':
+		if (planectrl == 1)
+		{
+			if (s[y][x + 2] == 5 || s[y - 1][x + 1] == 5)
+			{
+				x++;
+				life--;
+			}
+			else if (s[y][x + 2] == 6 || s[y - 1][x + 1] == 6)
+			{
+				x++;
+				life--;
+			}
+			else if (s[y][x + 2] == 7 || s[y - 1][x + 1] == 7)
+			{
+				x++;
+				life--;
+			}
+			else if (s[y][x + 2] == 8 || s[y - 1][x + 1] == 8)
+			{
+				x++;
+				life--;
+			}
+			else
+				x++;
+			break;
+		}
+		else if (planectrl == 2)
+		{
+			if ((s[y - 1][x + 1] == 5) || (s[y][x + 2] == 5) || (s[y + 1][x + 2] == 5) || (s[y - 2][x + 1] == 5))
+			{
+				x++;
+				life--;
+			}
+			else if ((s[y - 1][x + 1] == 6) || (s[y][x + 2] == 6) || (s[y + 1][x + 2] == 6) || (s[y - 2][x + 1] == 6))
+			{
+				x++;
+				life--;
+			}
+			else if ((s[y - 1][x + 1] == 7) || (s[y][x + 2] == 7) || (s[y + 1][x + 2] == 7) || (s[y - 2][x + 1] == 7))
+			{
+				x++;
+				life--;
+			}
+			else if ((s[y - 1][x + 1] == 8) || (s[y][x + 2] == 8) || (s[y + 1][x + 2] == 8) || (s[y - 2][x + 1] == 8))
+			{
+				x++;
+				life--;
+			}
+			else
+				x++;
+			break;
+		}
+		else if (planectrl == 3)
+		{
+			if ((s[y - 1][x - 1] == 5) || (s[y][x] == 5) || (s[y - 1][x + 1] == 5) || (s[y - 2][x + 1] == 5) || (s[y][x + 2] == 5) || (s[y - 1][x + 3] == 5))
+			{
+				x++;
+				life--;
+			}
+			else if ((s[y - 1][x - 1] == 6) || (s[y][x] == 6) || (s[y - 1][x + 1] == 6) || (s[y - 2][x + 1] == 6) || (s[y][x + 2] == 6) || (s[y - 1][x + 3] == 6))
+			{
+				x++;
+				life--;
+			}
+			else if ((s[y - 1][x - 1] == 7) || (s[y][x] == 7) || (s[y - 1][x + 1] == 7) || (s[y - 2][x + 1] == 7) || (s[y][x + 2] == 7) || (s[y - 1][x + 3] == 7))
+			{
+				x++;
+				life--;
+			}
+			else if ((s[y - 1][x - 1] == 8) || (s[y][x] == 8) || (s[y - 1][x + 1] == 8) || (s[y - 2][x + 1] == 8) || (s[y][x + 2] == 8) || (s[y - 1][x + 3] == 8))
+			{
+				x++;
+				life--;
+			}
+			else
+				x++;
+			break;
+		}
+	case 'J':
+	case 'j':
+		switch (bulletctrl)
+		{
+		case 0:
+			if (planectrl == 1) { s[y - 2][x] = 2; }
+			else if (planectrl == 2) { s[y - 3][x] = 2; }
+			else if (planectrl == 3)
+			{
+				s[y - 2][x + 1] = 2;
+				s[y - 2][x - 1] = 2;
+				if (firectrl == 1)
+					s[y - 2][x + 2] = s[y - 2][x - 2] = s[y - 3][x] = 2;
+			}
+			break;
+		case 1:
+			if (planectrl == 1)
+			{
+				s[y - 2][x + 1] = 2;
+				s[y - 2][x - 1] = 2;
+			}
+			else if (planectrl == 2)
+			{
+				s[y - 3][x + 1] = 2;
+				s[y - 3][x - 1] = 2;
+			}
+			else if (planectrl == 3)
+			{
+				s[y - 2][x + 1] = 2;
+				s[y - 2][x - 1] = 2;
+				s[y - 3][x + 2] = 2;
+				s[y - 3][x - 2] = 2;
+				if (firectrl == 1)
+					s[y - 2][x + 3] = s[y - 2][x - 3] = s[y - 2][x] = s[y - 3][x] = 2;
+			}
+			break;
+		}
+		break;
+	case 'k':
+	case 'K':                   //触发技能
+		if (skillcon > 0)
+		{
+			switch (planectrl)
+			{
+			case 1:
+				for (i = 1; i < Long - 1; i++)
+					for (j = 1; j < Wide - 1; j++)
+						if ((s[i][j] == 5) || (s[i][j] == 6) || (s[i][j] == 7) || (s[i][j] == 8))
+							s[i][j] = 0;
+				skillcon -= 1;
+				bosslife -= 20;
+				break;
+			case 2:
+				freezectrl = 1;
+				freezetime = clock();
+				skillcon -= 1;
+				break;
+			case 3:
+				firectrl = 1;
+				freezetime = clock();
+				skillcon -= 1;
+			}
+		}
+		break;
+
+	}
+	for (i = 1; i < Long - 1; i++)
+		for (j = 1; j < Wide - 1; j++)
+			if (s[i][j] == 1)
+				s[i][j] = 0;
+	switch (planectrl)
+	{
+	case 1:
+		if (y > Long - 2)y = Long - 2;
+		if (y < 3)y = 3;
+		if (x > Wide - 3)x = Wide - 3;
+		if (x < 2)x = 2;
+		s[y][x] = 1;
+		s[y][x + 1] = 1;
+		s[y][x - 1] = 1;
+		s[y - 1][x] = 1;
+		break;
+	case 2:
+		if (y > Long - 3)y = Long - 3;
+		if (y < 4)y = 4;
+		if (x > Wide - 3)x = Wide - 3;
+		if (x < 2)x = 2;
+		s[y - 2][x] = 1;
+		s[y][x] = 1;
+		s[y][x + 1] = 1;
+		s[y + 1][x + 1] = 1;
+		s[y + 1][x - 1] = 1;
+		s[y][x - 1] = 1;
+		s[y - 1][x] = 1;
+		break;
+	case 3:
+		if (y > Long - 2)y = Long - 2;
+		if (y < 4)y = 4;
+		if (x > Wide - 4)x = Wide - 4;
+		if (x < 3)x = 3;
+		s[y][x + 1] = 1;
+		s[y][x - 1] = 1;
+		s[y - 1][x] = 1;
+		s[y - 2][x] = 1;
+		s[y - 1][x - 2] = 1;
+		s[y - 1][x + 2] = 1;
+	}
+}
+void bullet(int s[][Wide])
+{
+	int i, j;
+
+	for (i = 0; i < Long; i++)                                               //子弹的控制
+		for (j = 0; j < Wide; j++)
+		{
+			if (s[i][j] == 2)
+			{
+				if (s[i - 1][j] != 5 && s[i - 1][j] != 3 && s[i - 1][j] != 6 && s[i - 1][j] != 7 && s[i - 1][j] != 8)
+				{
+					s[i][j] = 0;
+					s[i - 1][j] = 2;
+				}
+				else if (s[i - 1][j] == 5)
+				{
+					s[i - 1][j] = 0;
+					s[i][j] = 0;
+					score += 10;
+				}
+				else if (s[i - 1][j] == 6)
+				{
+					s[i - 1][j] = 0;
+					s[i][j] = 0;
+					score += 10;
+				}
+				else if (s[i - 1][j] == 7)
+				{
+					s[i - 1][j] = 0;
+					s[i][j] = 0;
+					score += 10;
+				}
+				else if (s[i - 1][j] == 8)
+				{
+					s[i - 1][j] = 0;
+					s[i][j] = 0;
+					score += 10;
+				}
+				else if (s[i - 1][j] == 3)
+				{
+					s[i][j] = 0;
+					bosslife -= 1;
+					score += 5;
+				}
+			}
+		}
+}
+void attack(int s[][Wide])
+{
+	int i, j;
+	for (i = Long - 1; i > 0; i--)//敌机的控制
+	{
+		for (j = Wide; j > 0; j--)
+		{
+			if ((s[i][j] == 5))      //敌机类型一
+			{
+				if (s[i + 1][j] == 0)
+				{
+					s[i + 1][j] = 5;
+					s[i][j] = 0;
+				}
+				else if (s[i + 1][j] == 1)
+				{
+					life--;
+					s[i + 1][j] = 1;
+					s[i][j] = 0;
+				}
+				else if (s[i + 1][j] == 2)
+				{
+					s[i + 1][j] = 0;
+					s[i][j] = 0;
+					score += 10;
+				}
+				else
+				{
+					s[i][j] = 0;
+				}
+			}
+			else if (s[i][j] == 6)                         //敌机类型二
+			{
+				if (s[i + 1][j] == 0)
+				{
+					s[i + 1][j] = 6;
+					s[i][j] = 0;
+				}
+				else if (s[i + 1][j] == 1)
+				{
+					life--;
+					s[i + 1][j] = 1;
+					s[i][j] = 0;
+				}
+				else if (s[i + 1][j] == 2)
+				{
+					s[i + 1][j] = 0;
+					s[i][j] = 0;
+					score += 10;
+				}
+				else
+				{
+					s[i][j] = 0;
+				}
+			}
+			else if (s[i][j] == 7)                        //敌机类型三
+			{
+				if (s[i + 1][j] == 0)
+				{
+					s[i + 1][j] = 7;
+					s[i][j] = 0;
+				}
+				else if (s[i + 1][j] == 1)
+				{
+					life--;
+					s[i + 1][j] = 1;
+					s[i][j] = 0;
+				}
+				else if (s[i + 1][j] == 2)
+				{
+					s[i + 1][j] = 0;
+					s[i][j] = 0;
+					score += 10;
+				}
+				else
+				{
+					s[i][j] = 0;
+				}
+			}
+			else if (s[i][j] == 8)                        //敌机类型四
+			{
+				if (s[i + 1][j] == 0)
+				{
+					s[i + 1][j] = 8;
+					s[i][j] = 0;
+				}
+				else if (s[i + 1][j] == 1)
+				{
+					life--;
+					s[i + 1][j] = 1;
+					s[i][j] = 0;
+				}
+				else if (s[i + 1][j] == 2)
+				{
+					s[i + 1][j] = 0;
+					s[i][j] = 0;
+					score += 10;
+				}
+				else
+				{
+					s[i][j] = 0;
+				}
+			}
+		}
+	}
+}
+int main()
+{
+
+	PlaySound(TEXT("C:\\000.wav"), NULL, SND_FILENAME | SND_ASYNC | SND_LOOP);//播放音乐
+	ready();
+rstart:
+	system("cls");
+	menu();
+	skillcon = 1;
+	int starttime, cntboss = 1, skilltime = 1;
+	int cbosslast = 0; int bosslast = 0;
+	int timeover, cnt, cntt, locb;
+	int remain = 1;
+	cnt = 1;
+	cntt = 1;
+	srand(time(NULL));
+	planemod(s);
+	starttime = clock();
+	while (life > 0)
+	{
+		if (clock() - freezetime >= 5000)
+		{
+			freezectrl = 0;
+			freezetime = 0;
+			firectrl = 0;
+		}
+		if ((score >= 1000) && (planectrl == 1))                                              //达到一定分数子弹升级
+			bulletctrl = 1;
+		else if ((score >= 1500) && (planectrl == 2))
+			bulletctrl = 1;
+		else if ((score >= 2000) && (planectrl == 3))
+			bulletctrl = 1;
+		if (cntboss % 200 == 0)
+		{
+			gotoxy(7, 10);
+			cntboss++;
+			printf("BOSS IS COMING");
+			Sleep(1000);
+			boss(s);
+			bosscom = 0;
+		}
+		timeover = 1;
+		if (bosscom != -1) {								    //有boss模式
+			if ((cnt++ % frequency) == 0 && bosscom == 1)
+			{
+				cntboss++;
+				cnt = 1;
+				locb = rand() % 20 + x - 10;
+				s[1][locb] = 5 + rand() % 4;
+			}
+		}
+		else {													//无boss模式
+			if ((cnt++ % frequency) == 0 /*&& bosscom == -1*/)
+			{
+				cnt = 1;
+				locb = rand() % 20 + x - 10;
+				s[1][locb] = 5 + rand() % 4;
+			}
+		}
+		bullet(s);
+		if (cntt++%speed == 0)
+		{
+			cntt = 1;
+			if (freezectrl == 0)
+				attack(s);
+		}
+		if (bosscom == 0)
+		{
+			locb = rand() % 28 + 1;
+			s[5][locb] = 5;
+			cbosslast++;
+			if (cbosslast % 200 == 0)                                                    //boss技能冷却
+			{
+				cbosslast = 1;
+				bosslast = clock();
+			}
+			if ((clock() - bosslast) < 2000 && ((clock() - bosslast) > 0))				//boss技能持续时间
+				s[4][9] = s[4][21] = s[5][13] = s[5][15] = s[5][17] = 5;
+		}
+		if (skilltime++ % 200 == 0 && skillcon < 3)
+		{
+			skilltime = 1;
+			skillcon++;
+		}
+		while (_kbhit())
+			moveplane(_getch());
+		Sleep(20);
+		zhanchang(s, remain);
+		if (mode != 1)
+		{
+			remain = second + 5 - (clock() - starttime) / 1000;
+			gotoxy(Wide + 1, 5);
+			printf("剩余时间为：%d秒", remain);
+			gotoxy(0, 0);
+		}
+		if (rstart == 1)
+			goto rstart;
+	}
+	return 0;
+}
