@@ -1,0 +1,700 @@
+
+#include<iostream>
+#include<stdlib.h>
+#include<conio.h>
+#include<windows.h>
+#include<ctime>
+#define Long 50
+#define Wide 20
+int s[Wide][Long] = { {0} };//Wide是高度，Long是宽				/*5代表边缘，1代表主角,4代表障碍
+using namespace std;
+void HideCursor()										/*隐藏光标函数*/
+{
+	CONSOLE_CURSOR_INFO cursor_info = { 1, 0 };
+	SetConsoleCursorInfo(GetStdHandle(STD_OUTPUT_HANDLE), &cursor_info);
+}
+void color(short x) {//字体色彩
+	if (x >= 0 && x <= 15)
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), x);
+	else
+		SetConsoleTextAttribute(GetStdHandle(STD_OUTPUT_HANDLE), 7);
+}
+void gotoxy(int x, int y) {							//光标到指定位置
+	COORD pos = { x,y };
+	HANDLE hOut = GetStdHandle(STD_OUTPUT_HANDLE);
+	SetConsoleCursorPosition(hOut, pos);
+}
+class Skill{
+protected:
+    int on;
+    char name[20];
+public:
+    virtual void start()=0;
+    virtual void skillon()=0;
+};
+class Mode {													//游戏的各种参数class Mode {													//游戏的各种参数
+protected:
+	int barr;
+	int speed;
+	bool mirror;
+	int mode;
+public:
+	Mode(int b=5,int s=1):barr(b),speed(s),mirror(1){};
+	void setbarr(int x){barr=x;};											//设置障碍生成数量（未完成）
+	void setspee(int x){speed=x;};												//设置障碍移动速度（未完成）
+	int getb() { return barr; }
+	int gets() { return speed; }
+	bool getm(){return mirror;
+	}
+	int getmod(){return mode;}
+	void setmod(int x){mode=x;}
+	void turnmi(){
+		mirror=!mirror;
+	}
+};
+class Skill1:public Skill
+{
+protected:
+    int ori;
+public:
+      Mode *c;
+    static int time1;
+    Skill1(){
+        on=0;
+        ori=1;
+        strcpy(name,"时间慢流");
+    }
+    void start()
+    {   ori=1;
+        c->setspee(5);
+        on=1;
+    }
+    void skillon()
+    {
+    if(on){
+        time1++;
+        gotoxy(52,22);
+        cout<<5-time1/10;
+        if(time1%50==0){
+            time1=1;
+            c->setspee(ori);
+            on=0;
+            gotoxy(52,22);
+            cout<<" ";
+            cout<<" ";
+        }
+    }
+    }
+};
+int Skill1::time1=1;
+class Prota {							//主角
+protected:
+	int col;
+	char name[10];
+	//ar apper[2];							//外貌
+    int skillnum;
+	int des;//初始位置
+public:
+    int life;
+    Skill *ski;
+    virtual void move()=0	;
+	void set() {
+		cout << "更喜欢什么颜色的主角呢：" << endl;
+		color(13);
+			cout << "1.purple" ;//
+		color(2);
+			cout<< "2.green" ;
+		color(4);
+			cout << "3.red" <<endl;
+		color(7);
+		char c=0;
+		while (1) {
+			c = _getche();
+			if (c == '1')
+			{
+				col = 13; break;
+			}
+			else if (c =='2')
+			{
+				col = 2; break;
+			}
+			else if (c == '3')
+			{
+				col = 4; break;
+			}
+
+		}
+		cout << "\n"<<"请输入名字：" << endl;
+		char nam[10];
+		cin >> nam;
+		strcpy(name, nam);
+	}
+	int getcolor()//获取人物颜色
+	{
+		return col;
+		}
+	char *getname()//获取人物姓名
+	{
+		return name;
+	}
+	int getlife()//获取人物生命值
+	{
+		return life;
+	}
+	void hurt()
+	{
+		life=life-1;
+	 }
+};
+class Skill2:public Skill{
+    static int time2;
+public:
+    Prota *b;
+    Skill2(){
+    on=0;
+    strcpy(name,"金身护体");
+    }
+    void start(){
+        on=1;
+    }
+    void skillon(){
+        if(on){
+            time2++;
+            gotoxy(52,22);
+            cout<<5-time2/10;
+            b->life=1;
+            if(time2%50==0)
+            {
+                time2=1;
+                on=0;
+                gotoxy(52,22);
+            cout<<" ";
+            cout<<" ";
+            }
+        }
+    }
+};
+int Skill2::time2=1;
+class Prota1:public Prota{
+protected:
+public:
+    Prota1(){
+		col = 1;
+		strcpy(name,  "player1");
+		//strcpy_s(apper, 2, "WA");
+		life = 1;
+		des = 10;
+		s[des][20] = s[des - 1][20] = 1;//
+	}
+	void move(){
+		char c;
+		c = _getch();
+		s[des][20] = s[des-1][20]=0;//
+		if (c == 'w' || c == 'W')
+		{
+			des--;
+			if (des <= 1)
+				des = 2;
+		}
+		else if (c == 's' || c == 'S')
+		{
+			des++;
+			if (des >= Wide - 2)
+				des = Wide - 2;
+		}
+		else if(c=='j'||c=='J'){
+            ski->start();
+		}
+		if(	s[des][20]==4||s[des - 1][20]==4)
+		{
+		life=life-1;
+		}
+		s[des][20] = s[des - 1][20] = 1;//
+	}
+};
+class Protaturn:public Prota{
+protected:
+public:
+    void move(){};
+    Protaturn(){
+		col = 1;
+		strcpy(name,  "player1");
+		//strcpy_s(apper, 2, "WA");
+		life = 1;
+		des = 10;
+		s[des][20] = s[des - 1][20] = 1;//
+	}
+    void move1() {
+		char c;
+		c = _getch();
+		s[des][20] = s[des-1][20]=0;//
+		if (c == 'w' || c == 'W')
+		{
+			des--;
+			if (des <= 1)
+				des = 2;
+		}
+		else if (c == 's' || c == 'S')
+		{
+			des++;
+			if (des >= Wide - 2)
+				des = Wide - 2;
+		}
+		else if(c=='j'||c=='J'){
+            ski->start();
+		}
+		if(	s[des][20]==4||s[des - 1][20]==4)
+		{
+		life=life-1;
+		}
+		s[des][20] = s[des - 1][20] = 1;//
+	}
+    void move2() {
+		char c;
+		c = _getch();
+		s[des][20] = s[des-1][20]=0;//
+		if (c == 's' || c == 'S')
+		{
+			des--;
+			if (des <= 1)
+				des = 2;
+		}
+		else if (c == 'w' || c == 'W')
+		{
+			des++;
+			if (des >= Wide - 2)
+				des = Wide - 2;
+		}
+		else if(c=='j'||c=='J'){
+            ski->start();
+		}
+		if(	s[des][20]==4||s[des - 1][20]==4)
+		{
+		life=life-1;
+		}
+		s[des][20] = s[des - 1][20] = 1;//
+	}
+};
+class Protamir:public Prota{
+protected:
+    int des2;
+public:
+     Protamir() {
+		col = 1;
+		strcpy(name,  "player1");
+		//strcpy_s(apper, 2, "WA");
+		life = 1;
+		des = 5;
+		s[des][20] = s[des - 1][20] = 1;//
+		des2=15;
+		s[des2][20] = s[des2 - 1][20] = 1;//
+	}
+    void move(){
+        char c;
+		c = _getch();
+		s[des][20] = s[des-1][20]=0;//
+		s[des2][20] = s[des2 - 1][20] = 0;//
+		if (c == 'w' || c == 'W')
+		{
+			des--;
+			des2++;
+			if (des <= 1)
+				des = 2;
+            if(des2>=Wide-1)
+                des2=Wide-2;
+		}
+		else if (c == 's' || c == 'S')
+		{
+		    des2--;
+			des++;
+			if (des2 <= Wide/2+1)
+				des2 = Wide/2+1;
+			if (des >= Wide/2)
+				des = Wide/2;
+		}
+		else if(c=='j'||c=='J'){
+            ski->start();
+		}
+		if(	s[des][20]==4||s[des - 1][20]==4||s[des2][20]==4||s[des2 - 1][20]==4)
+		{
+		life=life-1;
+		}
+		s[des][20] = s[des - 1][20] = 1;//
+		s[des2][20] = s[des2 - 1][20] = 1;
+    }
+};
+class Barr {													//障碍
+protected:
+	int n;
+	int des;
+	int desm;
+public:
+	void set() {
+		int a;
+
+		a = rand() % 18 + 1;
+		des = a;
+		s[a][Long - 1] = 4;
+		s[a - 1][Long - 1] = 4;
+		desm = Long - 1;
+	}
+	void move(Prota &a)
+	{
+
+		s[des][desm] = s[des - 1][desm] = 0;
+		desm--;
+		if (desm == 0)
+			set();
+		else
+		{
+			if(s[des][desm]==1|| s[des - 1][desm]==1||s[des - 1][desm]==2||s[des][desm]==2)
+			{
+				a.hurt();
+			}
+			s[des][desm] = s[des - 1][desm] = 4;
+		}
+
+	}
+
+};
+void print(Prota &P,Mode &m,int f=0,long int t=0) {
+	int col=P.getcolor();
+	int i, j;
+	if(m.getmod()==3)
+    {
+        for (i = 0; i < Long; i++) { s[0][i] = 5; s[Wide - 1][i] = 5;;s[Wide/2][i]=5; }
+        for (i = 1; i <=Wide - 2; i++) { s[i][0] = 5; s[i][Long- 1] = 5; }
+    }
+    else{
+	for (i = 0; i < Long; i++) { s[0][i] = 5; s[Wide - 1][i] = 5; }
+	for (i = 1; i <=Wide - 2; i++) { s[i][0] = 5; s[i][Long- 1] = 5; }
+    }
+
+	HideCursor();
+	for (i = 0; i < Wide; i++) {
+		for (j = 0; j < Long; j++)
+		{
+			gotoxy(j, i);
+			if (s[i][j] == 0)
+				printf(" ");
+			else if (s[i][j] == 1)
+			{
+				color(col);
+				printf("o");//人物
+				color(7);
+			}
+			 else if (s[i][j] == 2)
+			{
+				color(col);
+				printf("I");//人物
+				color(7);
+			}
+			else if (s[i][j] == 5)
+			{
+				color(11);
+				printf("+");//墙壁
+				color(7);
+			}
+			else if (s[i][j] == 4)
+			{
+				printf("#");//障碍
+			}
+
+		}
+		printf("\n");
+	}
+	gotoxy(Long+1,1);
+	{
+		if(f==1)
+		color(4);
+	if(m.getm()==1)
+	printf("正向");
+	else
+	printf("反向");
+	color(7);
+	printf("  还有 %d 秒反转",5-t%5);
+	}
+
+}
+int main1() {
+    Mode m;
+	Prota1 a;//主角
+	Skill1 sk1;Skill2 sk2;
+	sk1.c=&m;
+	sk2.b=&a;
+	int x;
+	cout<<"选择技能：1.时间慢流  2.金身护体"<<endl;
+	cin>>x;
+	if(x==1)
+        a.ski=&sk1;
+    else if(x==2)
+        a.ski=&sk2;
+	Barr b[5];//障碍物
+	a.set();//设置人物属性
+	int barrn = 0;//障碍物计数
+	int sp=1;
+	system("cls");
+	while (1) {
+        if(sp%m.gets()==0){
+            if(a.getlife()<1)
+			{
+				system("cls");
+				cout<<"  失败  "<<endl;
+				Sleep(3000);
+				getchar();
+				return 0;
+			}
+		if (barrn <= 4) {
+			srand(time(NULL));
+			b[barrn].set();
+			for (int i = 0; i < barrn-1; i++) {
+				b[i].move(a);
+			}
+			barrn++;
+		}
+		else {
+			for(int i=0;i<5;i++)
+			{
+				b[i].move(a);
+			}
+		}
+		sp=1;
+		}
+		sp++;
+		while (_kbhit())
+			a.move();
+        a.ski->skillon();
+		print(a,m);
+
+	}
+	system("pause");
+	return 0;
+}
+void setmode(Mode &m){
+    int x;
+cout<<"1.经典模式"<<endl;
+cout<<"2.反转模式"<<endl;
+cout<<"3.镜像模式"<<endl;
+cin>>x;
+m.setmod(x);
+}
+//void setskill(Prota &a,Skill1 &sk1,Skill2 &sk2);
+int main2() {
+	Mode m;
+
+
+	m.setspee(1);
+	m.setmod(3);
+	int sp=1;
+	Protamir a;//主角
+	Skill1 sk1;
+	Skill2 sk2;
+	sk1.c=&m;
+	sk2.b=&a;
+	int x;
+	cout<<"选择技能：1.时间慢流  2.金身护体"<<endl;
+	cin>>x;
+	if(x==1)
+        a.ski=&sk1;
+    else if(x==2)
+        a.ski=&sk2;
+	Barr b[5];//障碍物
+	a.set();//设置人物属性
+	int barrn = 0;//障碍物计数
+	system("cls");
+	while (1) {
+    if(sp%m.gets()==0){
+        if(a.getlife()<1)
+			{
+				system("cls");
+				cout<<"  失败  "<<endl;
+				Sleep(3000);
+				getchar();
+				return 0;
+			}
+		if (barrn <= 4) {
+			srand(time(NULL));
+			b[barrn].set();
+			for (int i = 0; i < barrn-1; i++) {
+				b[i].move(a);
+			}
+			barrn++;
+		}
+		else {
+			for(int i=0;i<5;i++)
+			{
+				b[i].move(a);
+			}
+		}
+		sp=1;
+    }
+    sp++;
+		while (_kbhit())
+			a.move();
+        a.ski->skillon();
+		print(a,m);
+	}
+	system("pause");
+	return 0;
+}
+int main3() {
+	Mode m;
+	int start=time(0);//计时，记录反转
+	int tim,tim2=start,tim3;
+	Protaturn a;//主角
+	Skill1 sk1;
+	Skill2 sk2;
+
+	sk1.c=&m;
+	sk2.b=&a;
+    int sp=1;
+	int x;
+	cout<<"选择技能：1.时间慢流  2.金身护体"<<endl;
+	cin>>x;
+	if(x==1)
+        a.ski=&sk1;
+    else if(x==2)
+        a.ski=&sk2;
+	Barr b[25];//障碍物
+	a.set();//设置人物属性
+	int barrn = 0;//障碍物计数
+	system("cls");
+	int t1=time(0);//计时点1
+	int k=0;//障碍物个数
+	tim3=time(0)-start;
+	int f=0;
+	int t=0;
+
+	while (1) {
+        if(sp%m.gets()==0){
+		if(a.getlife()<1)
+			{
+				system("cls");
+				cout<<"  失败  "<<endl;
+				Sleep(3000);
+				getchar();
+				return 0;
+			}
+	int t2=time(0);//计时点2
+    if(t2-t1<10)
+    {
+
+	if(t2-t1<2)
+	{
+		k=4;
+	}
+	else if(t2-t1<4)
+	{
+		k=9;
+	}
+	else if(t2-t1<6)
+	{
+		k=14;
+	}
+	else if(t2-t1<8)
+	{
+		k=19;
+	}
+	else
+	{
+		k=24;
+	}
+}
+		if (barrn <=k) {
+			srand(time(NULL));
+			b[barrn].set();
+			for (int i = 0; i < barrn-1; i++) {
+				b[i].move(a);
+			}
+			barrn++;
+		}
+
+		else {
+			for(int i=0;i<k+1;i++)
+			{
+				b[i].move(a);
+			}
+		}
+		sp=1;
+        }
+        sp++;
+		while (_kbhit())
+		{
+			if(m.getm()==1)
+			a.move1();
+			else a.move2();
+		}
+			tim=time(0)-start;
+			if(tim%5==0&&tim!=tim2)
+			{
+				m.turnmi();
+				tim3=tim;
+			}
+
+			tim2=tim;
+		if((tim+1)%5==0)
+		{
+   f=1;
+		}
+		if(tim%5==0)
+		{
+			f=0;
+			}
+        a.ski->skillon();
+		print(a,m,f,tim);
+
+	}
+
+	system("pause");
+	return 0;
+}
+extern void qishi();
+void shuoming()
+{
+	system("cls");
+	cout<<"   镜像模式：\n   躲避障碍物游戏，操作 正向/反向 会随时间变化而变化"<<endl;
+	cout<<"   双手模式：\n   躲避障碍物游戏，使用双手同时操作两个界面两个人物"<<endl;
+	cout<<"   输入Q返回上一个界面"<<endl;
+	char c;
+	cin>>c;
+	if(c=='q'||c=='Q')
+	{
+		qishi();
+	}
+}
+void qishi()
+{
+	system("cls");
+	cout<<"   选择游戏模式："<<endl;
+	cout<<"   1：基础模式"<<endl;
+	cout<<"   2：反转模式"<<endl;
+	cout<<"   3：镜像模式"<<endl;
+	cout<<"   4: 游戏说明"<<endl;
+	cout<<"   请输入选择："<<endl;
+	int z;
+	cin>>z;
+	switch(z)
+	{
+		case 1:
+			system("cls");
+			main1();
+			break;
+		case 2:
+			system("cls");
+			main3();
+			break;
+		case 3:
+			main2();
+			break;
+        case 4:
+            shuoming();
+		break;
+	}
+}
+int main()
+{
+	qishi();
+}
+
+
+
